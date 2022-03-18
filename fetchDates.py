@@ -52,19 +52,20 @@ if __name__ == "__main__":
                     savedEntries.append([startdt.strftime("%D %H:%M"), str(summary)])
     icalfile.close()
     
-    #   sort dates in list
+    #   sort dates in listX
     sortedEntries = sorted(savedEntries)
     #   iterate through list
     for x in sortedEntries:
         #   convert string-dates into datetime-dates again
         x[0] = datetime.strptime(x[0], "%m/%d/%y %H:%M")
 
-        #   calculate timedelta and print left over time
+        #   calculate timedelta and print left over time 
+        
         timeLeft = x[0]- datetime.today()
         timeLeftSeconds = timeLeft.total_seconds()
         days = (timeLeftSeconds/3600)/24
         hours = (days - math.floor(days))*24
         minutes = (hours - math.floor(hours))*60
         seconds = (minutes - math.floor(minutes))*60
-        print(str(x[0].day) + '.' + str(x[0].month) + '.' + str(x[0].year), str(x[0].hour) + ':' + str(x[0].minute)+ ':' + str(x[0].second), summary, "-->",
+        print(str(x[0].day) + '.' + str(x[0].month) + '.' + str(x[0].year), str(x[0].hour) + ':' + str(x[0].minute)+ ':' + str(x[0].second), x[1], "-->",
             math.floor(days), "Tage", math.floor(hours), "Stunden", math.floor(minutes), "Minuten", math.floor(seconds), "Sekunden")
