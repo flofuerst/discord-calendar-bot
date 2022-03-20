@@ -27,8 +27,9 @@ import math
 #         dates.append(rule.strftime("%D %H:%M"))
 #     return dates
 
-icalfile = open('calender_uni_wichtig.ics', 'rb')
+icalfile = open('testcalendar.ics', 'rb')
 gcal = icalendar.Calendar.from_ical(icalfile.read())
+icalfile.close()
 
 savedEntries = []
 for component in gcal.walk():
@@ -48,18 +49,20 @@ for component in gcal.walk():
         # else:
         
         #   save other dates in list
-        if startdt.strftime("%D") >= datetime.strftime(datetime.today(),"%D") and startdt.strftime("%Y") >= datetime.strftime(datetime.today(),"%Y"):
-            savedEntries.append([startdt.strftime("%D %H:%M"), str(summary)])
-icalfile.close()
 
-#   sort dates in listX
+        #   compare datetime in calender with current time (date and year) and use only upcoming event-dates
+        if startdt.strftime("%D") >= datetime.strftime(datetime.today(),"%D") and startdt.strftime("%Y") >= datetime.strftime(datetime.today(),"%Y"): 
+            savedEntries.append([startdt.strftime("%D %H:%M"), str(summary)])
+
+
+#   sort dates
 sortedEntries = sorted(savedEntries)
-#   iterate through list
 
 def print_dates(displayDays):
     count = 0
     outputList = []
     output = ''
+    
     #   iterate through sortedEntries
     while True: 
         #   save original Entry at index
@@ -87,7 +90,7 @@ def print_dates(displayDays):
         dateSecond = f'{entry.second:02d}'
 
         #   save dates which are in specified time span into outputList
-        if days <= displayDays:
+        if days <= displayDays and timeLeftSeconds>=0:
             outputList.append(str(dateDay) + '.' + str(dateMonth) + '.' + str(dateYear) + ' ' + str(dateHour) + ':' + str(dateMinute) + ':' + str(dateSecond) + ' | ' +
             originalEntry[1] + " --> " + str(math.floor(days)) + " Tage  " + str(math.floor(hours)) + " Stunden  " + str(math.floor(minutes)) + 
             " Minuten  " + str(math.floor(seconds)) + " Sekunden")
@@ -100,4 +103,3 @@ def print_dates(displayDays):
                 #   add newspace after string, if string is not last element
                 output+= i+'\n' if i != outputList[len(outputList)-1] else i
             return output
-print(print_dates(300))
