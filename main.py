@@ -7,7 +7,7 @@ import fetchDates
 import time
 
 client = discord.Client()
-
+daysToDisplay = 21
 #   init bot
 @client.event
 async def on_ready():
@@ -22,10 +22,10 @@ async def on_message(message):
         return
 
     if message.content.startswith('§init'):
-        writtenDates = await message.channel.send(fetchDates.print_dates(21))
+        writtenDates = await message.channel.send(fetchDates.print_dates(daysToDisplay))
         while(True):
             time.sleep(5)
-            await writtenDates.edit(content = fetchDates.print_dates(21))
+            await writtenDates.edit(content = fetchDates.print_dates(daysToDisplay))
 
 
 client.run(os.getenv('TOKEN'))
