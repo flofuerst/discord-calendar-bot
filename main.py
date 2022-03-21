@@ -8,25 +8,26 @@ import time
 
 client = discord.Client()
 daysToDisplay = 21
+
 #   init bot
 @client.event
 async def on_ready():
     print(client.user ,"ready")
-    channel = client.get_channel(954518491422138469)
 
 # define messages
 @client.event
 async def on_message(message):
+    channel = client.get_channel(955592796482437140)
+
     #   ignore messages from bot itself
     if message.author == client.user:
         return
 
     if message.content.startswith('§init'):
-        writtenDates = await message.channel.send(fetchDates.print_dates(daysToDisplay))
+        writtenDates = await channel.send(fetchDates.print_dates(daysToDisplay))
         while(True):
             time.sleep(5)
             await writtenDates.edit(content = fetchDates.print_dates(daysToDisplay))
-
 
 client.run(os.getenv('TOKEN'))
 
