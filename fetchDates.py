@@ -27,7 +27,7 @@ import math
 #         dates.append(rule.strftime("%D %H:%M"))
 #     return dates
 
-icalfile = open('testcalendar.ics', 'rb')
+icalfile = open('calendar_uni_wichtig.ics', 'rb')
 gcal = icalendar.Calendar.from_ical(icalfile.read())
 icalfile.close()
 
