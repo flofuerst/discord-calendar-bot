@@ -23,6 +23,8 @@ async def on_message(message):
     if message.author == client.user:
         return
 
+    #   attention: bot doesn't care where init command comes from. He strictly writes output in specified channel, 
+    #   regardless of the server
     if message.content.startswith('§init'):
         writtenDates = await channel.send(fetchDates.print_dates(daysToDisplay))
         while(True):
