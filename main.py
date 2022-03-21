@@ -6,6 +6,13 @@ import os
 import fetchDates
 import time
 
+#   TODO: make server and channel based messages (prevent declared problem where bot only writes on specified channel,
+#         regardless of server and channel of initialized message)
+    
+#   TODO: read data from calendar url, not fixed .ics file
+# 
+#   TODO: optimize code and nice formatting in discord like: https://discord.com/developers/docs/reference#message-formatting
+
 client = discord.Client()
 daysToDisplay = 21
 
