@@ -36,7 +36,7 @@ async def setup(ctx):
     task_loop.start(writtenMessage)
 
 #   define async loop to edit message which was written in setup function
-@tasks.loop(seconds= 2)
+@tasks.loop(minutes = 5)
 async def task_loop(writtenMessage):
     print('updated', task_loop.current_loop, 'times')
     await writtenMessage.edit(content = fetchDates.print_dates(daysToDisplay))
