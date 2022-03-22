@@ -6,26 +6,7 @@ import icalendar
 from dateutil.rrule import *
 import math
 
-# def parse_recurrences(recur_rule, start, exclusions):
-#     #   Find all reoccuring events
-#     rules = rruleset()
-#     first_rule = rrulestr(recur_rule, dtstart=start)
-#     rules.rrule(first_rule)
-#     if not isinstance(exclusions, list):
-#         exclusions = [exclusions]
-#         for xdate in exclusions:
-#             try:
-#                 rules.exdate(xdate.dts[0].dt)
-#             except AttributeError:
-#                 pass
-
-#     #   get current utc time with offset (CET Timezone) 
-#     now = datetime.now(timezone.utc) + timedelta(hours=1)
-#     this_year = now + timedelta(days=120)
-#     dates = []
-#     for rule in rules.between(now, this_year):
-#         dates.append(rule.strftime("%D %H:%M"))
-#     return dates
+import pytz
 
 icalfile = open('calendar_uni_wichtig.ics', 'rb')
 gcal = icalendar.Calendar.from_ical(icalfile.read())
@@ -41,14 +22,6 @@ for component in gcal.walk():
         startdt = component.get('dtstart').dt
         enddt = component.get('dtend').dt
         exdate = component.get('exdate')
-        # if component.get('rrule'):
-        #     reoccur = component.get('rrule').to_ical().decode('utf-8')
-        #     #   save reocurring dates in list
-        #     for date in parse_recurrences(reoccur, startdt, exdate):
-        #         savedEntries.append([date, str(summary)])
-        # else:
-        
-        #   save other dates in list
 
         #   compare datetime in calender with current time (date and year) and use only upcoming event-dates
         if startdt.strftime("%D") >= datetime.strftime(datetime.today(),"%D") and startdt.strftime("%Y") >= datetime.strftime(datetime.today(),"%Y"): 
@@ -65,7 +38,7 @@ def print_dates(displayDays):
     
     #   iterate through sortedEntries
     while True: 
-        #   save original Entry at index
+        #   save originalEntry at index
         originalEntry = sortedEntries[count]
 
         #   convert string-dates into datetime-dates again
@@ -76,8 +49,11 @@ def print_dates(displayDays):
         timeLeft = datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M") - datetime.today()
         timeLeftSeconds = timeLeft.total_seconds()
         days = math.ceil((timeLeftSeconds/3600)/24)
+
+        #   convert datetime to utc timestamp
+        utc_timestamp = round(datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M").astimezone(pytz.UTC).timestamp())
         if days <= displayDays and timeLeftSeconds>=0:
-            entry.append([round(datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M").timestamp()), originalEntry[1]])
+            entry.append([utc_timestamp, originalEntry[1]])
 
         count +=1
 
@@ -88,3 +64,4 @@ def print_dates(displayDays):
                 text = '<t:'+str(content[0])+':F>' + ' ' + content[1] + ' ' + '<t:'+str(content[0])+':R>'
                 output += text+'\n' if content != entry[len(entry)-1] else text
             return output
+print_dates(21)

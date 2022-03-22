@@ -1,3 +1,4 @@
+import asyncio
 from multiprocessing.connection import Client
 import discord
 from discord.ext import commands, tasks
@@ -15,7 +16,7 @@ daysToDisplay = 21
 
 #   create logging-file
 logger = logging.getLogger('discord')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -24,6 +25,14 @@ logger.addHandler(handler)
 @client.event
 async def on_ready():
     print(client.user, "ready")
+
+#   command not found exception message
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        em = discord.Embed(title=f"Error!!!", description=f"Command not found.", color=ctx.author.color) 
+        await ctx.send(embed=em)
+    # raise error
 
 #   define §setup command: write dates one time and then call async task_loop with parameter writtenMassage
 #   last 10 messages are getting deleted before writing dates
