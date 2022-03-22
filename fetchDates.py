@@ -1,6 +1,7 @@
 from cgi import test
 from datetime import datetime, timedelta, timezone
 from itertools import count
+from lib2to3.pytree import convert
 from traceback import print_tb
 import icalendar
 from dateutil.rrule import *
@@ -49,9 +50,18 @@ def print_dates(displayDays):
         timeLeft = datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M") - datetime.today()
         timeLeftSeconds = timeLeft.total_seconds()
         days = math.ceil((timeLeftSeconds/3600)/24)
-
+        
         #   convert datetime to utc timestamp
-        utc_timestamp = round(datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M").astimezone(pytz.UTC).timestamp())
+
+        local = pytz.timezone('Europe/Vienna')
+        naive = datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M")
+        local_dt = local.localize(naive, is_dst=None)
+        utc_dt = local_dt.astimezone(pytz.utc)
+        print(naive, naive.timestamp())
+        print(utc_dt, utc_dt.timestamp())
+
+        utc_timestamp = round(utc_dt.timestamp())
+
         if days <= displayDays and timeLeftSeconds>=0:
             entry.append([utc_timestamp, originalEntry[1]])
 
