@@ -60,8 +60,8 @@ sortedEntries = sorted(savedEntries)
 
 def print_dates(displayDays):
     count = 0
-    outputList = []
     output = ''
+    entry = []
     
     #   iterate through sortedEntries
     while True: 
@@ -69,37 +69,22 @@ def print_dates(displayDays):
         originalEntry = sortedEntries[count]
 
         #   convert string-dates into datetime-dates again
-        #   'entry' is used, because if method gets iterated (and originalEntry would be used), then (after first iteration) 
-        #   strptime would convert Date into Date --> error
-        entry = datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M")
-
-        #   calculate timedelta for left over time
-        timeLeft = entry - datetime.today()
+        #   'entry' is used because of iteration (datetime would be converted into datetime (with strptime)
+        #   after second iteration --> error)
+        #   only upcoming dates in the next <displayDays> are getting stored in entry-list
+        #   .timestamp() to get unix-timestamp of date for further bot implementation
+        timeLeft = datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M") - datetime.today()
         timeLeftSeconds = timeLeft.total_seconds()
-        days = (timeLeftSeconds/3600)/24
-        hours = (days - math.floor(days))*24
-        minutes = (hours - math.floor(hours))*60
-        seconds = (minutes - math.floor(minutes))*60
-
-        #   format Dates into two-digit-Dates: 1.1.2001 1:1:1 --> 01.01.2001 01:01:01
-        dateDay = f'{entry.day:02d}'
-        dateMonth = f'{entry.month:02d}'
-        dateYear = entry.year
-        dateHour = f'{entry.hour:02d}'
-        dateMinute = f'{entry.minute:02d}'
-        dateSecond = f'{entry.second:02d}'
-
-        #   save dates which are in specified time span into outputList
+        days = math.ceil((timeLeftSeconds/3600)/24)
         if days <= displayDays and timeLeftSeconds>=0:
-            outputList.append(str(dateDay) + '.' + str(dateMonth) + '.' + str(dateYear) + ' ' + str(dateHour) + ':' + str(dateMinute) + ':' + str(dateSecond) + ' | ' +
-            originalEntry[1] + " --> " + str(math.floor(days)) + " Tage  " + str(math.floor(hours)) + " Stunden  " + str(math.floor(minutes)) + 
-            " Minuten  " + str(math.floor(seconds)) + " Sekunden")
-        
-        count += 1
+            entry.append([round(datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M").timestamp()), originalEntry[1]])
 
-        #   save dates into output (as a string) after iteration through sortedEntries is finished
+        count +=1
+
+        #   store formatted date for discord + text of event in string for easier output in main.py
+        #   add newspace to text if not last element in entry
         if(count == len(sortedEntries)):
-            for i in outputList:
-                #   add newspace after string, if string is not last element
-                output+= i+'\n' if i != outputList[len(outputList)-1] else i
+            for content in entry:
+                text = '<t:'+str(content[0])+':F>' + ' ' + content[1] + ' ' + '<t:'+str(content[0])+':R>'
+                output += text+'\n' if content != entry[len(entry)-1] else text
             return output

@@ -1,43 +1,54 @@
-from distutils.command.clean import clean
-from email import message
 from multiprocessing.connection import Client
 import discord
+from discord.ext import commands, tasks
 import os
 import fetchDates
-import time
+import logging
 
 #   TODO: make server and channel based messages (prevent declared problem where bot only writes on specified channel,
 #         regardless of server and channel of initialized message)
     
 #   TODO: read data from calendar url, not fixed .ics file
-# 
-#   TODO: optimize code and nice formatting in discord like: https://discord.com/developers/docs/reference#message-formatting
 
-client = discord.Client()
+client = commands.Bot(command_prefix='§')
 daysToDisplay = 21
+
+#   create logging-file
+logger = logging.getLogger('discord')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 #   init bot
 @client.event
 async def on_ready():
-    print(client.user ,"ready")
+    print(client.user, "ready")
 
-# define messages
-@client.event
-async def on_message(message):
-    channel = client.get_channel(955592796482437140)
+#   define §setup command: write dates one time and then call async task_loop with parameter writtenMassage
+#   last 10 messages are getting deleted before writing dates
+#   cancel async task_loop before new setup
+@client.command()
+async def setup(ctx):
+    task_loop.cancel()
+    await ctx.channel.purge(limit = 10)
+    writtenMessage = await ctx.send(fetchDates.print_dates(daysToDisplay))
+    task_loop.start(writtenMessage)
 
-    #   ignore messages from bot itself
-    if message.author == client.user:
-        return
+#   define async loop to edit message which was written in setup function
+@tasks.loop(seconds= 2)
+async def task_loop(writtenMessage):
+    print('updated', task_loop.current_loop, 'times')
+    await writtenMessage.edit(content = fetchDates.print_dates(daysToDisplay))
 
-    #   attention: bot doesn't care where init command comes from. He strictly writes output in specified channel, 
-    #   regardless of the server
-    if message.content.startswith('§init'):
-        writtenDates = await channel.send(fetchDates.print_dates(daysToDisplay))
-        while(True):
-            time.sleep(5)
-            await writtenDates.edit(content = fetchDates.print_dates(daysToDisplay))
+#   define §clear command to clear last 10 messages from channel
+#   cancel async task_loop before clearing
+@client.command()
+async def clear(ctx):
+    task_loop.cancel()
+    await ctx.channel.purge(limit = 10)
 
+#   get token from .env-file
 client.run(os.getenv('TOKEN'))
 
 
