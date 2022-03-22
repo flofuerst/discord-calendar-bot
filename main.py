@@ -38,7 +38,7 @@ async def on_command_error(ctx, error):
 #   last 10 messages are getting deleted before writing dates
 #   cancel async task_loop before new setup
 @client.command()
-async def setup(ctx):
+async def init(ctx):
     task_loop.cancel()
     await ctx.channel.purge(limit = 10)
     writtenMessage = await ctx.send(fetchDates.print_dates(daysToDisplay))

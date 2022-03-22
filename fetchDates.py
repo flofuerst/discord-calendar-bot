@@ -45,23 +45,20 @@ def print_dates(displayDays):
         #   convert string-dates into datetime-dates again
         #   'entry' is used because of iteration (datetime would be converted into datetime (with strptime)
         #   after second iteration --> error)
-        #   only upcoming dates in the next <displayDays> are getting stored in entry-list
-        #   .timestamp() to get unix-timestamp of date for further bot implementation
         timeLeft = datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M") - datetime.today()
         timeLeftSeconds = timeLeft.total_seconds()
         days = math.ceil((timeLeftSeconds/3600)/24)
         
         #   convert datetime to utc timestamp
-
         local = pytz.timezone('Europe/Vienna')
         naive = datetime.strptime(originalEntry[0], "%m/%d/%y %H:%M")
         local_dt = local.localize(naive, is_dst=None)
         utc_dt = local_dt.astimezone(pytz.utc)
-        print(naive, naive.timestamp())
-        print(utc_dt, utc_dt.timestamp())
 
+        #   .timestamp() to get unix-timestamp of utc-date for further bot implementation
         utc_timestamp = round(utc_dt.timestamp())
 
+        #   only upcoming dates in the next <displayDays> are getting stored in entry-list
         if days <= displayDays and timeLeftSeconds>=0:
             entry.append([utc_timestamp, originalEntry[1]])
 
@@ -74,4 +71,3 @@ def print_dates(displayDays):
                 text = '<t:'+str(content[0])+':F>' + ' ' + content[1] + ' ' + '<t:'+str(content[0])+':R>'
                 output += text+'\n' if content != entry[len(entry)-1] else text
             return output
-print_dates(21)
