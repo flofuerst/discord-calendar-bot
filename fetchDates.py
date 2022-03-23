@@ -18,19 +18,20 @@ def print_dates(displayDays):
         #   save originalEntry at index
         originalEntry = sortedEntries[count]
 
+        #   convert datetime to utc datetime
+        local = pytz.timezone('Europe/Vienna')
+        naive = datetime.strptime(originalEntry[0].strftime("%D %H:%M"), "%m/%d/%y %H:%M")
+        local_dt = local.localize(naive, is_dst=None)
+        utc_dt = local_dt.astimezone(pytz.utc)
         #   converting originalEntry to string and then to date back again because weird timezone problem of new scripts
         #   using .astimezone to convert both dates to Europe/Vienna timezone and therefore to be able to use datetime.now() on webhost, which uses utc timezone
-        timeLeft = datetime.strptime(originalEntry[0].strftime("%D %H:%M"), "%m/%d/%y %H:%M").astimezone(pytz.timezone('Europe/Vienna')) - datetime.now().astimezone(pytz.utc)
+        timeLeft = utc_dt - datetime.now().astimezone(pytz.utc)
         print(datetime.strptime(originalEntry[0].strftime("%D %H:%M"), "%m/%d/%y %H:%M").astimezone(pytz.timezone('Europe/Vienna')), datetime.now().astimezone(pytz.utc))
         print(timeLeft)
         timeLeftSeconds = timeLeft.total_seconds()
         days = math.ceil((timeLeftSeconds/3600)/24)
         
-        #   convert datetime to utc timestamp
-        local = pytz.timezone('Europe/Vienna')
-        naive = datetime.strptime(originalEntry[0].strftime("%D %H:%M"), "%m/%d/%y %H:%M")
-        local_dt = local.localize(naive, is_dst=None)
-        utc_dt = local_dt.astimezone(pytz.utc)
+        
 
         #   .timestamp() to get unix-timestamp of utc-date for further bot implementation
         utc_timestamp = round(utc_dt.timestamp())
