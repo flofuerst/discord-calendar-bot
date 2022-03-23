@@ -25,7 +25,7 @@ logger.addHandler(handler)
 @client.event
 async def on_ready():
     print(client.user, "ready, starting to display dates...")
-    channel = client.get_channel(id=933047858880446477)
+    channel = client.get_channel(id=955592796482437140)
     await channel.purge(limit = 10)
     writtenMessage = await channel.send(fetchDates.print_dates(daysToDisplay))
     task_loop.start(writtenMessage)
