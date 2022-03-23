@@ -25,9 +25,9 @@ for component in gcal.walk():
         exdate = component.get('exdate')
 
         #   compare datetime in calender with current time (date and year) and use only upcoming event-dates
+        # print(summary)
         if startdt.strftime("%D") >= datetime.strftime(datetime.today(),"%D") and startdt.strftime("%Y") >= datetime.strftime(datetime.today(),"%Y"): 
             savedEntries.append([startdt.strftime("%D %H:%M"), str(summary)])
-
 
 #   sort dates
 sortedEntries = sorted(savedEntries)
@@ -71,3 +71,7 @@ def print_dates(displayDays):
                 text = '<t:'+str(content[0])+':F>' + ' ' + content[1] + ' ' + '<t:'+str(content[0])+':R>'
                 output += text+'\n' if content != entry[len(entry)-1] else text
             return output
+
+#   TODO: weekly frequency is not recognized
+
+print_dates(21)
