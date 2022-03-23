@@ -20,7 +20,8 @@ def print_dates(displayDays):
 
         #   converting originalEntry to string and then to date back again because weird timezone problem of new scripts
         #   using .astimezone to convert both dates to Europe/Vienna timezone and therefore to be able to use datetime.now() on webhost, which uses utc timezone
-        timeLeft = datetime.strptime(originalEntry[0].strftime("%D %H:%M"), "%m/%d/%y %H:%M").astimezone(pytz.timezone('Europe/Vienna')) - datetime.now().astimezone(pytz.timezone('Europe/Vienna'))
+        timeLeft = datetime.strptime(originalEntry[0].strftime("%D %H:%M"), "%m/%d/%y %H:%M") - datetime.now()
+        print(timeLeft)
         
         timeLeftSeconds = timeLeft.total_seconds()
         days = math.ceil((timeLeftSeconds/3600)/24)
@@ -47,4 +48,4 @@ def print_dates(displayDays):
                 text = '<t:'+str(content[0])+':F>' + ' ' + content[1] + ' ' + '<t:'+str(content[0])+':R>'
                 output += text+'\n' if content != entry[len(entry)-1] else text
             return output
-# print_dates(21)
+print_dates(21)
