@@ -27,8 +27,6 @@ def print_dates(displayDays):
 
         #   substracting utc datetime from utc-now-datetime to get the right 'timeLeft' even while webhosting because webhosts use utc
         timeLeft = utc_dt - datetime.now().astimezone(pytz.utc)
-        print(datetime.strptime(originalEntry[0].strftime("%D %H:%M"), "%m/%d/%y %H:%M").astimezone(pytz.timezone('Europe/Vienna')), datetime.now().astimezone(pytz.utc))
-        print(timeLeft)
         timeLeftSeconds = timeLeft.total_seconds()
         days = math.ceil((timeLeftSeconds/3600)/24)
         
