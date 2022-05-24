@@ -62,7 +62,7 @@ async def clear(ctx):
     task_loop.cancel()
     await ctx.channel.purge(limit = 10)
 
-#   get token from .env-file
+#   get token from .env-file 
 client.run(os.getenv('TOKEN'))
 
 
