@@ -12,7 +12,7 @@ import logging
 #   TODO: read data from calendar url, not fixed .ics file
 
 client = commands.Bot(command_prefix='§')
-daysToDisplay = 14
+daysToDisplay = 14 
 
 
 #   create logging-file
