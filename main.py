@@ -27,19 +27,20 @@ logger.addHandler(handler)
 async def on_ready():
     print(client.user, "ready, starting to display dates...")
     channel = client.get_channel(id=955592796482437140)
-    await channel.purge(limit = 10)
-    writtenMessage = await channel.send(fetchDates.print_dates(daysToDisplay))
+
+    writtenMessage = await channel.fetch_message(986402491430207529)
     task_loop.start(writtenMessage)
+
 
 #   command not found exception message
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        em = discord.Embed(title=f"Error!!!", description=f"Command not found.", color=ctx.author.color) 
+        em = discord.Embed(title=f"Error!", description=f"Command not found.", color=ctx.author.color) 
         await ctx.send(embed=em)
     # raise error
 
-#   define §setup command: write dates one time and then call async task_loop with parameter writtenMassage
+#   define §init command: write dates one time and then call async task_loop with parameter writtenMassage
 #   last 10 messages are getting deleted before writing dates
 #   cancel async task_loop before new setup
 @client.command()
@@ -48,6 +49,7 @@ async def init(ctx):
     await ctx.channel.purge(limit = 10)
     writtenMessage = await ctx.send(fetchDates.print_dates(daysToDisplay))
     task_loop.start(writtenMessage)
+
 
 #   define async loop to edit message which was written in setup function
 @tasks.loop(minutes = 5)
@@ -62,7 +64,11 @@ async def clear(ctx):
     task_loop.cancel()
     await ctx.channel.purge(limit = 10)
 
+async def clearOne(ctx):
+    task_loop.cancel()
+    await ctx.channel.purge(limit = 1)
+
+
+
 #   get token from .env-file 
 client.run(os.getenv('TOKEN'))
-
-
