@@ -1,7 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 import icalendar
 from rrule_patched import *
-import pytz
 import requests
 import os
 

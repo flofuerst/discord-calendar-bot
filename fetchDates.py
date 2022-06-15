@@ -4,8 +4,6 @@ import getDates
 from dateutil.rrule import *
 import math
 import pytz
-from ics import Calendar
-import requests
 
 
 def print_dates(displayDays):
