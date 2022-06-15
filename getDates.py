@@ -2,6 +2,8 @@ from datetime import date, datetime, timedelta, timezone
 import icalendar
 from rrule_patched import *
 import pytz
+import requests
+import os
 
 #   get dates/events + recurrent events
 def get_events_from_ics(ics_string, window_start, window_end):
@@ -90,13 +92,18 @@ def get_events_from_ics(ics_string, window_start, window_end):
     events.sort(key=lambda e: e['startdt'])
     return events
 
-#   open .ics-file
-icalfile = open('calendar_uni_wichtig.ics', 'rb')
+#   load ics file from calendar url
+#   url is stored in .env
+url = os.getenv('URL')
+def updateCalendar():
+    icalfile = requests.get(url).text
 
-#   call function to get all dates
-events = get_events_from_ics(icalfile.read(), datetime.now(timezone.utc), datetime.now(timezone.utc) + timedelta(days=120))
-recurrent_dates = []
+    #   call function to get all dates
+    events = get_events_from_ics(icalfile, datetime.now(timezone.utc), datetime.now(timezone.utc) + timedelta(days=120))
+    recurrent_dates = []
 
-#   save ALL dates in recurrent_dates-list
-for e in events: 
-    recurrent_dates.append([e['startdt'], e['summary']])
+    #   save ALL dates in recurrent_dates-list
+    for e in events: 
+        recurrent_dates.append([e['startdt'], e['summary']])
+    
+    return recurrent_dates

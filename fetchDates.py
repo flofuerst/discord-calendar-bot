@@ -4,11 +4,14 @@ import getDates
 from dateutil.rrule import *
 import math
 import pytz
+from ics import Calendar
+import requests
 
-#   saving dates + recurrent dates from getDates script into sortedEntries
-sortedEntries = getDates.recurrent_dates
 
 def print_dates(displayDays):
+    #   saving dates + recurrent dates from getDates script into sortedEntries
+    sortedEntries = getDates.updateCalendar()
+
     count = 0
     output = ''
     entry = []
@@ -48,4 +51,7 @@ def print_dates(displayDays):
                 text = '<t:'+str(content[0])+':F>' + ' ' + content[1] + ' ' + '<t:'+str(content[0])+':R>'
                 output += text+'\n' if content != entry[len(entry)-1] else text
             return output
+
+
+#method-call to test functions
 print_dates(21)

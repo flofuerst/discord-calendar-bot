@@ -9,7 +9,6 @@ import logging
 #   TODO: make server and channel based messages (prevent declared problem where bot only writes on specified channel,
 #         regardless of server and channel of initialized message)
     
-#   TODO: read data from calendar url, not fixed .ics file
 
 client = commands.Bot(command_prefix='§')
 daysToDisplay = 14 
@@ -23,6 +22,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 #   init bot
+# get message id and call loop which edits message in specific time
 @client.event
 async def on_ready():
     print(client.user, "ready, starting to display dates...")
