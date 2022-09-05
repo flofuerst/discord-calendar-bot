@@ -67,6 +67,7 @@ async def clear(ctx):
     await ctx.channel.purge(limit=10)
 
 
+#clear only one message
 async def clearOne(ctx):
     task_loop.cancel()
     await ctx.channel.purge(limit=1)
