@@ -48,6 +48,7 @@ def print_dates(displayDays):
             for content in entry:
                 text = '<t:'+str(content[0])+':F>' + ' ' + content[1] + ' ' + '<t:'+str(content[0])+':R>'
                 output += text+'\n' if content != entry[len(entry)-1] else text
+            print(output)
             return output
 
 

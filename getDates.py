@@ -3,10 +3,11 @@ import icalendar
 from rrule_patched import *
 import requests
 import os
+from dotenv import load_dotenv
+
 
 #   get dates/events + recurrent events
 def get_events_from_ics(ics_string, window_start, window_end):
-    
     events = []
 
     def append_event(e):
@@ -34,20 +35,16 @@ def get_events_from_ics(ics_string, window_start, window_end):
 
         dates = []
 
-       
         for d in rules.between(window_start, window_end):
             dates.append(d)
         return dates
 
-
-
     cal = filter(lambda c: c.name == 'VEVENT',
-        icalendar.Calendar.from_ical(ics_string).walk()
-        )
+                 icalendar.Calendar.from_ical(ics_string).walk()
+                 )
 
     def date_to_datetime(d):
         return datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
-
 
     for vevent in cal:
         summary = str(vevent.get('summary'))
@@ -70,14 +67,14 @@ def get_events_from_ics(ics_string, window_start, window_end):
             reoccur = vevent.get('rrule').to_ical().decode('utf-8')
             for d in get_recurrent_datetimes(reoccur, startdt, exdate):
                 new_e = {
-                    'startdt': d,      
-                    'allday': allday,                  
+                    'startdt': d,
+                    'allday': allday,
                     'summary': summary,
                     'desc': description,
                     'loc': location
-                    }
+                }
                 if enddt:
-                    new_e['enddt'] = d + (enddt-startdt)                        
+                    new_e['enddt'] = d + (enddt - startdt)
                 append_event(new_e)
         else:
             append_event({
@@ -87,13 +84,18 @@ def get_events_from_ics(ics_string, window_start, window_end):
                 'summary': summary,
                 'desc': description,
                 'loc': location
-                })
+            })
     events.sort(key=lambda e: e['startdt'])
     return events
 
+
 #   load ics file from calendar url
 #   url is stored in .env
+
+load_dotenv()
 url = os.getenv('URL')
+
+
 def updateCalendar():
     icalfile = requests.get(url).text
 
@@ -102,7 +104,7 @@ def updateCalendar():
     recurrent_dates = []
 
     #   save ALL dates in recurrent_dates-list
-    for e in events: 
+    for e in events:
         recurrent_dates.append([e['startdt'], e['summary']])
-    
+
     return recurrent_dates
