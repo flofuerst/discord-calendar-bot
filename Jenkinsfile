@@ -44,7 +44,7 @@ podTemplate(yaml:'''
             container('docker') {
                 stage ('Build and push docker image') {
                     sh label: 'Build docker image',
-                       script: "docker build . -t repo.htl-md.schule:5004/pydiscordbot:v$version -t htlmd/pydiscordbot:v$version"
+                       script: "docker build . -t repo.htl-md.schule:5004/pydiscordbot:latest -t repo.htl-md.schule:5004/pydiscordbot:v$version -t htlmd/pydiscordbot:v$version"
                     withCredentials([usernamePassword(credentialsId: 'nexus-deploybot', passwordVariable: 'password', usernameVariable: 'user')]) {
                           sh label: 'Login to docker repo',
                              script: 'docker login --username $user --password $password repo.htl-md.schule:5004'
