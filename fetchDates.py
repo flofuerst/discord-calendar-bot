@@ -9,7 +9,6 @@ import pytz
 def print_dates(displayDays):
     #   saving dates + recurrent dates from getDates script into sortedEntries
     sortedEntries = getDates.updateCalendar()
-
     count = 0
     output = ''
     entry = []

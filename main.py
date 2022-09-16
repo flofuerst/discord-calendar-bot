@@ -56,7 +56,8 @@ async def init(ctx):
 @tasks.loop(minutes=5)
 async def task_loop(writtenMessage):
     print('updated', task_loop.current_loop, 'times')
-    await writtenMessage.edit(content=fetchDates.print_dates(daysToDisplay))
+    date_content=fetchDates.print_dates(daysToDisplay)
+    await writtenMessage.edit(content=date_content if date_content != "" else "`In den nächsten 14 Tagen stehen keine wichtigen Termine an!`")
 
 
 #   define §clear command to clear last 10 messages from channel
