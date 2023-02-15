@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta, timezone
-import icalendar
+from datetime import datetime
 import getDates
 from dateutil.rrule import *
 import math
