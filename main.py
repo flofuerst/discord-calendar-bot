@@ -14,6 +14,7 @@ from datetime import datetime
 #   TODO: implement reminder in event creation
 #   TODO: Edit message in event creation (or after, like ',cal edit...')
 #   TODO: Create recurring event
+#   TODO: red cross reaction emoji for deleting every bot message (except event info)
 
 bot = commands.Bot(command_prefix=',cal ', intents=discord.Intents.all())
 daysToDisplay = 14
@@ -57,10 +58,10 @@ bot.help_command = MyHelp()
 @bot.event
 async def on_ready():
     logging.info('Bot ready, starting to display dates')
-    channel = bot.get_channel(id=954518491422138469)
+    channel = bot.get_channel(id=955592796482437140)
 
     global writtenMessage
-    writtenMessage = await channel.fetch_message(1075709231044501514)
+    writtenMessage = await channel.fetch_message(986402491430207529)
     task_loop.start(writtenMessage)
 
 
