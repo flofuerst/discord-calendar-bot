@@ -62,6 +62,7 @@ async def on_ready():
 
     global writtenMessage
     writtenMessage = await channel.fetch_message(986402491430207529)
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game(',cal help'))
     task_loop.start(writtenMessage)
 
 
