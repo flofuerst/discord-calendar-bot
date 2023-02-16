@@ -14,21 +14,42 @@ from datetime import datetime
 #   TODO: implement reminder in event creation
 #   TODO: Edit message in event creation (or after, like ',cal edit...')
 #   TODO: Create recurring event
-#   TODO: Implement help function like ',cal help' or ',cal create'
-
 
 bot = commands.Bot(command_prefix=',cal ', intents=discord.Intents.all())
 daysToDisplay = 14
 logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+# define help command for available commands
+class MyHelp(commands.HelpCommand):
+    @bot.event
+    async def send_bot_help(self, mapping):
+        embed = discord.Embed(title="Help", color=discord.Color.blurple())
+        for cog, commands in mapping.items():
+           command_signatures = [self.get_command_signature(c) for c in commands]
+           if command_signatures:
+                availableCommands = []
+                cog_name = getattr(cog, "qualified_name", "Available commands")
+                for command in command_signatures:
+                    if("create" in command or "help" in command):
+                        availableCommands.append(command)
+                embed.add_field(name=cog_name, value="\n".join(availableCommands), inline=False)
 
-#   create logging-file
-# logger = logging.getLogger('discord')
-# logger.setLevel(logging.DEBUG)
-# handler = logging.FileHandler(filename='logs/discord.log', encoding='utf-8', mode='w')
-# handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-# logger.addHandler(handler)
+        channel = self.get_destination()
+        await channel.send(embed=embed)
+
+    @bot.event
+    async def send_command_help(self, command):
+        embed = discord.Embed(title=self.get_command_signature(command), color=discord.Color.blurple())
+        if command.help:
+            embed.description = command.help
+        if alias := command.aliases:
+            embed.add_field(name="Aliases", value=", ".join(alias), inline=False)
+
+        channel = self.get_destination()
+        await channel.send(embed=embed)
+
+bot.help_command = MyHelp()
 
 
 #   init bot
@@ -53,7 +74,7 @@ async def on_command_error(ctx, error):
     # raise error
 
 
-#   define §init command: write dates one time and then call async task_loop with parameter writtenMassage
+#   define init command: write dates one time and then call async task_loop with parameter writtenMassage
 #   last 10 messages are getting deleted before writing dates
 #   cancel async task_loop before new setup
 @bot.command()
@@ -74,11 +95,16 @@ async def task_loop(writtenMessage):
 
 
 @bot.command()
-async def create(ctx, title, startDate, startTime, endDate, endTime):
+async def create(ctx, startDate, startTime, endDate, endTime, *title):
+    """Used to add events to calendar\n\nSYNOPSIS:\n,cal create DD.MM.YYYY HH:MM DD.MM.YYYY HH:MM TITLE...\n\n
+    example: ,cal create 17.02.2023 18:00 17.02.2023 20:10 [ANA] Anmeldung Test1"""
     global createMessage, createContext, createTitle, createStartDate, createStartTime, createEndDate, createEndTime
     # global var for create-message
     createMessage = ctx.message
-    createTitle = title
+
+    createTitle = ""
+    for t in title:
+        createTitle+=t + " "
     createStartDate = startDate
     createStartTime = startTime
     createEndDate = endDate
@@ -96,9 +122,9 @@ async def create(ctx, title, startDate, startTime, endDate, endTime):
     endT = bool(re.search(timeRegex, endTime))
 
     # only create event if specified dates (and time) are correct
-    if (startD and endD and startT and endT):
+    if (startD and endD and startT and endT and createTitle != ""):
         em = discord.Embed(title=f"Do you really want to create this event?",
-                           description=f"Title: {title}\nStart date: {startDate} at {startTime}\nEnd date: {endDate} at {endTime}",
+                           description=f"Title: {createTitle}\nStart date: {startDate} at {startTime}\nEnd date: {endDate} at {endTime}",
                            color=ctx.author.color)
         message = await ctx.send(embed=em)
 
@@ -110,7 +136,7 @@ async def create(ctx, title, startDate, startTime, endDate, endTime):
     # error if not correct date(s) specified
     else:
         em = discord.Embed(
-            title=f"Error!", description=f"Incorrect input\nSYNPOPSIS:\n,cal create TITLE DD.MM:YYYY HH:MM DD.MM:YYYY HH:MM",
+            title=f"Error!", description=f"Incorrect input\nSYNOPSIS:\n,cal create DD.MM.YYYY HH:MM DD.MM.YYYY HH:MM TITLE...",
             color=ctx.author.color)
         errMsg = await ctx.send(embed=em)
         logging.info('Failed event creation - incorrect input')
@@ -168,18 +194,13 @@ async def on_raw_reaction_add(payload):
         await asyncio.sleep(60)
         await infoMsg.delete()
 
-    # await ctx.send("reacted");
 
+# @bot.command()
+# async def help(ctx):
+#     print("Help called")
 
-@bot.command()
-async def test(ctx, arg1, arg2):
-    task_loop.cancel()
-    await ctx.send(f'You passed {arg1} and {arg2}')
-
-#   define §clear command to clear last 10 messages from channel
+#   define clear command to clear last 10 messages from channel
 #   cancel async task_loop before clearing
-
-
 @bot.command()
 async def clear(ctx):
     task_loop.cancel()
