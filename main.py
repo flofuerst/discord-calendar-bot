@@ -1,23 +1,26 @@
-# import asyncio
-# from multiprocessing.connection import Client
+#from multiprocessing.connection import Client
 import discord
 from discord.ext import commands, tasks
 import os
 import fetchDates
 import re
-import time
+import asyncio
+import logging
 
 #   TODO: make server and channel based messages (prevent declared problem where bot only writes on specified channel,
 #         regardless of server and channel of initialized message)
-#   TODO: help function
 #   TODO: zero events allowed
-#   TODO: reminder einbauen
-#   TODO: Edit message in event creation
+#   TODO: upload memes from #memes channel?
+#   TODO: implement reminder in event creation
+#   TODO: Edit message in event creation (or after, like ',cal edit...')
 #   TODO: Logging
+#   TODO: Implement help function like ',cal help' or ',cal create'
 
 
 bot = commands.Bot(command_prefix=',cal ', intents=discord.Intents.all())
 daysToDisplay = 14
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+
 
 #   create logging-file
 # logger = logging.getLogger('discord')
@@ -31,7 +34,7 @@ daysToDisplay = 14
 # get message id and call loop which edits message in specific time
 @bot.event
 async def on_ready():
-    print(bot.user, "ready, starting to display dates...")
+    logging.info('Bot ready, starting to display dates')
     channel = bot.get_channel(id=954518491422138469)
 
     global writtenMessage
@@ -63,19 +66,24 @@ async def init(ctx):
 #   define async loop to edit message which was written in setup function
 @tasks.loop(minutes=5)
 async def task_loop(writtenMessage):
-    print('updated', task_loop.current_loop, 'times')
+    logging.info('Updated events which are being displayed')
+    logging.info('Wait for 5 minutes')
     date_content = fetchDates.print_dates(daysToDisplay)
     await writtenMessage.edit(content=date_content if date_content != "" else "`In den nächsten 14 Tagen stehen keine wichtigen Termine an!`")
 
 
 @bot.command()
 async def create(ctx, title, startDate, startTime, endDate, endTime):
+    global createMessage, createContext, createTitle, createStartDate, createStartTime, createEndDate, createEndTime
     #global var for create-message
-    global createMessage
     createMessage = ctx.message
+    createTitle = title
+    createStartDate = startDate
+    createStartTime = startTime
+    createEndDate = endDate
+    createEndTime = endTime
 
     #global var for ctx
-    global createContext
     createContext = ctx
 
     task_loop.cancel()
@@ -89,7 +97,8 @@ async def create(ctx, title, startDate, startTime, endDate, endTime):
     #only create event if specified dates (and time) are correct
     if (startD and endD and startT and endT):
         em = discord.Embed(title=f"Do you really want to create this event?", 
-            description=f"Title: {title}\nstart date: {startDate} at {startTime}\nend date: {endDate} at {endTime}", color=ctx.author.color)
+            description=f"Title: {title}\nStart date: {startDate} at {startTime}\nEnd date: {endDate} at {endTime}", 
+            color=ctx.author.color)
         message = await ctx.send(embed=em)
 
         #global var for confirm-message
@@ -107,8 +116,6 @@ async def create(ctx, title, startDate, startTime, endDate, endTime):
 @bot.event
 async def on_raw_reaction_add(payload):
     #check if same user, correct message id and correct emoji
-    print(payload.user_id)
-    print(createContext.author.id)
     if(payload.user_id == createContext.author.id and payload.message_id == eventConfirm.id and payload.emoji.name == "✅"):
         #delete create and confirm messages
         await eventConfirm.delete()
@@ -120,9 +127,14 @@ async def on_raw_reaction_add(payload):
 
 
         ##################
-        em = discord.Embed(title=f"Event created successfully!", color=createContext.author.color)
+        em = discord.Embed(title=f"Event created successfully!",
+            description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}",
+            color=createContext.author.color)
         infoMsg = await createContext.send(embed=em)
-        time.sleep(10)
+        logging.info('Successful event creation')
+
+        #async sleep
+        await asyncio.sleep(60)
         await infoMsg.delete()
     #check if same user, correct message id and correct emoji
     elif(payload.user_id == createContext.author.id and payload.message_id == eventConfirm.id and payload.emoji.name == "❌"):
@@ -132,7 +144,11 @@ async def on_raw_reaction_add(payload):
 
         em = discord.Embed(title=f"Event not created!", color=createContext.author.color)
         infoMsg = await createContext.send(embed=em)
-        time.sleep(10)
+        logging.info('Aborted event creation')
+
+
+        #async sleep
+        await asyncio.sleep(60)
         await infoMsg.delete()
 
     
