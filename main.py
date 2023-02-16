@@ -18,7 +18,7 @@ from datetime import datetime
 bot = commands.Bot(command_prefix=',cal ', intents=discord.Intents.all())
 daysToDisplay = 14
 logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+    format='%(asctime)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
 # define help command for available commands
 class MyHelp(commands.HelpCommand):
