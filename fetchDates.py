@@ -11,6 +11,10 @@ def print_dates(displayDays):
     count = 0
     output = ''
     entry = []
+
+    #check if no dates to display
+    if(sortedEntries == ""):
+        return ""
     
     #   iterate through sortedEntries
     while True: 

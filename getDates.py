@@ -103,6 +103,10 @@ def updateCalendar():
     events = get_events_from_ics(icalfile, datetime.now(timezone.utc), datetime.now(timezone.utc) + timedelta(days=120))
     recurrent_dates = []
 
+    #check if no dates to display
+    if (events == []):
+        return ""
+
     #   save ALL dates in recurrent_dates-list
     for e in events:
         recurrent_dates.append([e['startdt'], e['summary']])
