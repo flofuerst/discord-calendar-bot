@@ -144,9 +144,9 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
         logging.info('Failed event creation - incorrect input')
 
         # async sleep
-        await asyncio.sleep(60)
-        await createMessage.delete()
-        await errMsg.delete()
+        # await asyncio.sleep(60)
+        # await createMessage.delete()
+        # await errMsg.delete()
 
     task_loop.start(writtenMessage)
 
@@ -157,7 +157,7 @@ async def on_raw_reaction_add(payload):
     if (payload.user_id == createContext.author.id and payload.message_id == eventConfirm.id and payload.emoji.name == "✅"):
         # delete create and confirm messages
         await eventConfirm.delete()
-        await createMessage.delete()
+        # await createMessage.delete()
 
         # build up correct datetime
         startDate = createStartDate.split('.')
@@ -173,28 +173,29 @@ async def on_raw_reaction_add(payload):
         createEvent.create_event(startDt, endDt, createTitle)
 
         em = discord.Embed(title=f"Event created successfully!",
-                           description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}",
+                           description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\n\n Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
                            color=createContext.author.color)
         infoMsg = await createContext.send(embed=em)
         logging.info('Successful event creation')
 
         # async sleep
-        await asyncio.sleep(60)
-        await infoMsg.delete()
+        # await asyncio.sleep(60)
+        # await infoMsg.delete()
     # check if same user, correct message id and correct emoji
     elif (payload.user_id == createContext.author.id and payload.message_id == eventConfirm.id and payload.emoji.name == "❌"):
         # delete create and confirm messages
         await eventConfirm.delete()
-        await createMessage.delete()
+        # await createMessage.delete()
 
         em = discord.Embed(title=f"Event not created!",
+                           description=f"Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
                            color=createContext.author.color)
         infoMsg = await createContext.send(embed=em)
         logging.info('Aborted event creation')
 
         # async sleep
-        await asyncio.sleep(60)
-        await infoMsg.delete()
+        # await asyncio.sleep(60)
+        # await infoMsg.delete()
 
 
 # @bot.command()

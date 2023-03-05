@@ -6,3 +6,6 @@
 
 # Ignore SASS config files
 .sass-cache
+
+# ignore log files
+.log
