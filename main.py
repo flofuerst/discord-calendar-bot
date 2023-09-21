@@ -138,7 +138,7 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
     elif (startD and endD and startT and endT and createTitle != ""):
         memberCounter = 0
         participantsChoice = ""
-        unicodeDigit = chr(ord("\U00000030") + memberCounter) + "\U000020E3"
+        digitEmoji = chr(ord("\U00000030") + memberCounter) + "\U000020E3"
         emojiList = ['🙌', '💝', '😜', '🔥', '⬅️', '🏙', '👿', '🔙', '😿', '⏭',
           '🗝', '😭', '🏁', '🗒', '🔱', '✒️', '☎️', '⛄️', '🅿️', '💫',
           '💡', '📄', '💪', '🤑', '💠', '❣', '✍', '🐇', '⚱', '🗽',
@@ -153,10 +153,10 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
 
         for member in members:
             logging.info("participant: " + participantsChoice)
-            if(not member.bot):
+            if (not member.bot):
                 if (memberCounter < 10):
-                    participantsChoice += unicodeDigit
-                    usedEmojis.append(unicodeDigit)
+                    participantsChoice += digitEmoji
+                    usedEmojis.append(digitEmoji)
                 else:
                     randomEmoji = random.sample(emojiList, 1)[0]
                     participantsChoice += randomEmoji
@@ -171,18 +171,15 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
                            color=ctx.author.color)
         message = await ctx.send(embed=em)
 
-        em = discord.Embed(title=f"Do you really want to create this event?",
-                           # \n <@{members[0].id}>
-                           description=f"Title: {createTitle}\nStart date: {startDate} at {startTime}\nEnd date: {endDate} at {endTime}",
-                           color=ctx.author.color)
-        message = await ctx.send(embed=em)
+        for emoji in usedEmojis:
+            await message.add_reaction("✅")
+            await message.add_reaction("❌")
+            await message.add_reaction(emoji)
 
-        # global var for confirm-message
-        global eventConfirm
-        eventConfirm = message
+        global eventParticipants
+        eventParticipants = message
+
         activeMessages.add(createContext.author.id)
-        await message.add_reaction("✅")
-        await message.add_reaction("❌")
     # error if not correct date(s) specified
     else:
         em = discord.Embed(
@@ -197,6 +194,19 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
 @bot.event
 async def on_raw_reaction_add(payload):
     if (payload.user_id == createContext.author.id):
+        if (payload.message_id == eventParticipants.id):
+            em = discord.Embed(title=f"Do you really want to create this event?",
+                           # \n <@{members[0].id}>
+                           description=f"Title: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}",
+                           color=createContext.author.color)
+            message = await createContext.send(embed=em)
+
+            # global var for confirm-message
+            global eventConfirm
+            eventConfirm = message
+            
+            await message.add_reaction("✅")
+            await message.add_reaction("❌")
         if (payload.message_id == eventConfirm.id):
             # check if same user, correct message id and correct emoji
             if (payload.emoji.name == "✅"):
