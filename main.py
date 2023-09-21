@@ -61,11 +61,11 @@ bot.help_command = MyHelp()
 @bot.event
 async def on_ready():
     logging.info('Bot ready, starting to display dates')
-    channel = bot.get_channel(id=933047858880446477)  # 955592796482437140
+    channel = bot.get_channel(id=955592796482437140)  # 955592796482437140
 
     global writtenMessage
     # 986402491430207529
-    writtenMessage = await channel.fetch_message(1154135543676932129)
+    writtenMessage = await channel.fetch_message(986402491430207529)
     await bot.change_presence(status=discord.Status.online, activity=discord.Game(',cal help'))
     task_loop.start(writtenMessage)
 
@@ -79,15 +79,32 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=em)
     # raise error
 
+def displayDates():
+    entry = fetchDates.print_dates(daysToDisplay)
+    output = ''
+    
+    for content in entry:
+        displayedParticipants = content[2]
+        displayedParticipants = '-' if displayedParticipants == "" or displayedParticipants == "None" else displayedParticipants
+        
+        text = '<t:'+str(content[0])+':F>' + '\n' + content[1] + \
+            ' ' + '<t:'+str(content[0])+':R>\nTeilnehmer: ' + displayedParticipants + '\n\n'
+        output += text+'\n' if content != entry[len(entry)-1] else text
+    return output
 
 #   define init command: write dates one time and then call async task_loop with parameter writtenMassage
 #   last 10 messages are getting deleted before writing dates
 #   cancel async task_loop before new setup
+
 @bot.command()
 async def init(ctx):
+    # global var for ctx
+    createContext = ctx
+
     task_loop.cancel()
-    await ctx.channel.purge(limit=10)
-    writtenMessage = await ctx.send(fetchDates.print_dates(daysToDisplay))
+    await createContext.channel.purge(limit=10)
+    
+    writtenMessage = await createContext.send("Loading...")
     task_loop.start(writtenMessage)
 
 
@@ -96,18 +113,23 @@ async def init(ctx):
 async def task_loop(writtenMessage):
     logging.info('Updated events which are being displayed')
     logging.info('Wait for 5 minutes')
-    date_content = fetchDates.print_dates(daysToDisplay)
-    await writtenMessage.edit(content=date_content if date_content != "" else "`In den nächsten 14 Tagen stehen keine wichtigen Termine an!🥳`")
+    date_content = displayDates()
+    em = discord.Embed(description=date_content)
+    await writtenMessage.edit(content="", embed=em if date_content != "" else "`In den nächsten 14 Tagen stehen keine wichtigen Termine an!🥳`")
 
+
+createContext = None
 
 @bot.command()
 async def create(ctx, startDate, startTime, endDate, endTime, *title):
     """Used to add events to calendar\n\nSYNOPSIS:\n,cal create DD.MM.YYYY HH:MM DD.MM.YYYY HH:MM TITLE...\n\n
     example: ,cal create 17.02.2023 18:00 17.02.2023 20:10 [ANA] Anmeldung Test1"""
-    global createMessage, createContext, createTitle, createStartDate, createStartTime, createEndDate, createEndTime, possibleParticipants
+    global createMessage, createTitle, createStartDate, createStartTime, createEndDate, createEndTime, possibleParticipants, createContext
 
     # global var for create-message
     createMessage = ctx.message
+
+    createContext = ctx
 
     createTitle = ""
     for t in title:
@@ -116,10 +138,6 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
     createStartTime = startTime
     createEndDate = endDate
     createEndTime = endTime
-    
-
-    # global var for ctx
-    createContext = ctx
 
     task_loop.cancel()
     dateRegex = "^(0[1-9]|[1-2][0-9]|3[0-1])\.(0[1-9]|1[0-2])\.\d{4}$"
@@ -143,15 +161,15 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
         participantsChoice = ""
         digitEmoji = chr(ord("\U00000030") + memberCounter) + "\U000020E3"
         emojiList = ['🙌', '💝', '😜', '🔥', '⬅️', '🏙', '👿', '🔙', '😿', '⏭',
-          '🗝', '😭', '🏁', '🗒', '🔱', '✒️', '☎️', '⛄️', '🅿️', '💫',
-          '💡', '📄', '💪', '🤑', '💠', '❣', '✍', '🐇', '⚱', '🗽',
-          '🐷', '🌯', '🕊', '🚃', '‼️', '🍞', '⚒', '🗨', '🍡', '🔲',
-          '🎹', '⚾️', '⚛', '🚁', '🚻', '😂', '🏩', '🚘', '🌕', '🛬',
-          '🚍', '🏴', '🚠', '♎️', '🌝', '🎮', '🏹', '🛐', '🔃', '🍺',
-          '🐄', '🎱', '👂', '🙅', '🏨', '😯', '🌞', '🎾', '👸', '🏵',
-          '🛣', '🍁', '🚢', '🔆', '👤', '👊', '🙎', '🌫', '🍴', '⚪️',
-          '🔉', '🚧', '❓', '📞', '👽', '❗️', '🏉', '🍵', '🚈', '🔺',
-          '📊', '💿', '⛲️', '🌬', '💽', '🔒', '🎩', '🌳', '👯', '👚']
+                     '🗝', '😭', '🏁', '🗒', '🔱', '✒️', '☎️', '⛄️', '🅿️', '💫',
+                     '💡', '📄', '💪', '🤑', '💠', '❣', '✍', '🐇', '⚱', '🗽',
+                     '🐷', '🌯', '🕊', '🚃', '‼️', '🍞', '⚒', '🗨', '🍡', '🔲',
+                     '🎹', '⚾️', '⚛', '🚁', '🚻', '😂', '🏩', '🚘', '🌕', '🛬',
+                     '🚍', '🏴', '🚠', '♎️', '🌝', '🎮', '🏹', '🛐', '🔃', '🍺',
+                     '🐄', '🎱', '👂', '🙅', '🏨', '😯', '🌞', '🎾', '👸', '🏵',
+                     '🛣', '🍁', '🚢', '🔆', '👤', '👊', '🙎', '🌫', '🍴', '⚪️',
+                     '🔉', '🚧', '❓', '📞', '👽', '❗️', '🏉', '🍵', '🚈', '🔺',
+                     '📊', '💿', '⛲️', '🌬', '💽', '🔒', '🎩', '🌳', '👯', '👚']
 
         possibleParticipants = {}
 
@@ -196,6 +214,7 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
 
 eventConfirm = None
 participants = ""
+
 @bot.event
 async def on_raw_reaction_add(payload):
     global eventConfirm, participants
@@ -208,17 +227,18 @@ async def on_raw_reaction_add(payload):
                     participants = "-"
 
                 em = discord.Embed(title=f"Do you really want to create this event?",
-                            description=f"Title: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}",
-                            color=createContext.author.color)
+                                   description=f"Title: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}",
+                                   color=createContext.author.color)
                 message = await createContext.send(embed=em)
 
                 eventConfirm = message
-                
+
                 await message.add_reaction("✅")
                 await message.add_reaction("❌")
             if (payload.emoji.name in possibleParticipants.keys()):
-                addedParticipants.append(possibleParticipants[payload.emoji.name])
-                
+                addedParticipants.append(
+                    possibleParticipants[payload.emoji.name])
+
         if (eventConfirm is not None and payload.message_id == eventConfirm.id):
             # check if same user, correct message id and correct emoji
             if (payload.emoji.name == "✅"):
@@ -236,7 +256,8 @@ async def on_raw_reaction_add(payload):
                     endDate[0]), int(endTime[0]), int(endTime[1]))
 
                 # create event with specified title and datetimes
-                createEvent.create_event(startDt, endDt, createTitle, addedParticipants)
+                createEvent.create_event(
+                    startDt, endDt, createTitle, addedParticipants)
 
                 em = discord.Embed(title=f"Event created successfully!",
                                    description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}\n\n Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
@@ -257,8 +278,8 @@ async def on_raw_reaction_add(payload):
                 infoMsg = await createContext.send(embed=em)
                 activeMessages.remove(createContext.author.id)
                 logging.info('Aborted event creation')
-            
-            #clear participants
+
+            # clear participants
             addedParticipants.clear()
 
 #   define clear command to clear last 10 messages from channel

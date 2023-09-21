@@ -109,6 +109,6 @@ def updateCalendar():
 
     #   save ALL dates in recurrent_dates-list
     for e in events:
-        recurrent_dates.append([e['startdt'], e['summary']])
+        recurrent_dates.append([e['startdt'], e['summary'], e['desc']])
 
     return recurrent_dates

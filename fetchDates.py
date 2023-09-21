@@ -40,18 +40,14 @@ def print_dates(displayDays):
 
         #   only upcoming dates in the next <displayDays> are getting stored in entry-list
         if days <= displayDays and timeLeftSeconds>=0:
-            entry.append([utc_timestamp, originalEntry[1]])
+            entry.append([utc_timestamp, originalEntry[1], originalEntry[2]])
 
         count +=1
 
         #   store formatted date for discord + text of event in string for easier output in main.py
         #   add newspace to text if not last element in entry
         if(count == len(sortedEntries)):
-            for content in entry:
-                text = '<t:'+str(content[0])+':F>' + ' ' + content[1] + ' ' + '<t:'+str(content[0])+':R>'
-                output += text+'\n' if content != entry[len(entry)-1] else text
-            #print(output)
-            return output
+            return entry
 
 
 #method-call to test functions
