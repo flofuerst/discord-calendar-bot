@@ -12,6 +12,8 @@ from datetime import datetime
 bot = commands.Bot(command_prefix=',cal ', intents=discord.Intents.all())
 daysToDisplay = 14
 activeMessages = set()
+addedParticipants = []
+
 logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -102,7 +104,7 @@ async def task_loop(writtenMessage):
 async def create(ctx, startDate, startTime, endDate, endTime, *title):
     """Used to add events to calendar\n\nSYNOPSIS:\n,cal create DD.MM.YYYY HH:MM DD.MM.YYYY HH:MM TITLE...\n\n
     example: ,cal create 17.02.2023 18:00 17.02.2023 20:10 [ANA] Anmeldung Test1"""
-    global createMessage, createContext, createTitle, createStartDate, createStartTime, createEndDate, createEndTime
+    global createMessage, createContext, createTitle, createStartDate, createStartTime, createEndDate, createEndTime, possibleParticipants
 
     # global var for create-message
     createMessage = ctx.message
@@ -114,6 +116,7 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
     createStartTime = startTime
     createEndDate = endDate
     createEndTime = endTime
+    
 
     # global var for ctx
     createContext = ctx
@@ -149,31 +152,31 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
           '🛣', '🍁', '🚢', '🔆', '👤', '👊', '🙎', '🌫', '🍴', '⚪️',
           '🔉', '🚧', '❓', '📞', '👽', '❗️', '🏉', '🍵', '🚈', '🔺',
           '📊', '💿', '⛲️', '🌬', '💽', '🔒', '🎩', '🌳', '👯', '👚']
-        usedEmojis = []
+
+        possibleParticipants = {}
 
         for member in members:
-            logging.info("participant: " + participantsChoice)
             if (not member.bot):
+                memberMentionId = f"<@{member.id}>"
                 if (memberCounter < 10):
                     participantsChoice += digitEmoji
-                    usedEmojis.append(digitEmoji)
+                    possibleParticipants[digitEmoji] = memberMentionId
                 else:
                     randomEmoji = random.sample(emojiList, 1)[0]
                     participantsChoice += randomEmoji
-                    usedEmojis.append(randomEmoji)
-                participantsChoice += f"<@{members[memberCounter].id}>"
+                    possibleParticipants[randomEmoji] = memberMentionId
+                participantsChoice += memberMentionId
                 memberCounter += 1
 
         # TODO Add reaction and keep track of participants which got selected --> show them in embed and save them in calendar; also ping them before event starts
 
         em = discord.Embed(title=f"Add Participants",
-                           description=f"Please select the participants of this event.\nSelect ✅ if done and ❌ if there are no participants.\n{participantsChoice}",
+                           description=f"Please select the participants of this event.\nSelect ✅ if done.\n\n{participantsChoice}",
                            color=ctx.author.color)
         message = await ctx.send(embed=em)
 
-        for emoji in usedEmojis:
+        for emoji in possibleParticipants.keys():
             await message.add_reaction("✅")
-            await message.add_reaction("❌")
             await message.add_reaction(emoji)
 
         global eventParticipants
@@ -191,23 +194,32 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
     task_loop.start(writtenMessage)
 
 
+eventConfirm = None
+participants = ""
 @bot.event
 async def on_raw_reaction_add(payload):
+    global eventConfirm, participants
+
     if (payload.user_id == createContext.author.id):
         if (payload.message_id == eventParticipants.id):
-            em = discord.Embed(title=f"Do you really want to create this event?",
-                           # \n <@{members[0].id}>
-                           description=f"Title: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}",
-                           color=createContext.author.color)
-            message = await createContext.send(embed=em)
+            if (payload.emoji.name == "✅"):
+                participants = ", ".join(addedParticipants)
+                if (participants == ""):
+                    participants = "-"
 
-            # global var for confirm-message
-            global eventConfirm
-            eventConfirm = message
-            
-            await message.add_reaction("✅")
-            await message.add_reaction("❌")
-        if (payload.message_id == eventConfirm.id):
+                em = discord.Embed(title=f"Do you really want to create this event?",
+                            description=f"Title: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}",
+                            color=createContext.author.color)
+                message = await createContext.send(embed=em)
+
+                eventConfirm = message
+                
+                await message.add_reaction("✅")
+                await message.add_reaction("❌")
+            if (payload.emoji.name in possibleParticipants.keys()):
+                addedParticipants.append(possibleParticipants[payload.emoji.name])
+                
+        if (eventConfirm is not None and payload.message_id == eventConfirm.id):
             # check if same user, correct message id and correct emoji
             if (payload.emoji.name == "✅"):
                 # delete confirm message
@@ -224,13 +236,14 @@ async def on_raw_reaction_add(payload):
                     endDate[0]), int(endTime[0]), int(endTime[1]))
 
                 # create event with specified title and datetimes
-                createEvent.create_event(startDt, endDt, createTitle)
+                createEvent.create_event(startDt, endDt, createTitle, addedParticipants)
 
                 em = discord.Embed(title=f"Event created successfully!",
-                                   description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\n\n Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
+                                   description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}\n\n Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
                                    color=createContext.author.color)
                 infoMsg = await createContext.send(embed=em)
                 activeMessages.remove(createContext.author.id)
+
                 logging.info('Successful event creation')
 
             # check if same user, correct message id and correct emoji
@@ -244,6 +257,9 @@ async def on_raw_reaction_add(payload):
                 infoMsg = await createContext.send(embed=em)
                 activeMessages.remove(createContext.author.id)
                 logging.info('Aborted event creation')
+            
+            #clear participants
+            addedParticipants.clear()
 
 #   define clear command to clear last 10 messages from channel
 #   cancel async task_loop before clearing

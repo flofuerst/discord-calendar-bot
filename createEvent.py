@@ -3,7 +3,7 @@ import caldav
 import os
 import pytz
 
-def create_event(startDate, endDate, summary):
+def create_event(startDate, endDate, summary, description):
     url = os.getenv('MODIFY_URL')
     username = os.getenv('USERNAME')
     password = os.getenv('PASSWORD')
@@ -30,8 +30,9 @@ def create_event(startDate, endDate, summary):
                 localEndDate = local.localize(naiveEndDate, is_dst=None)
 
                 may_event = cal.save_event(
+                summary=summary,
                 dtstart=localStartDate,
                 dtend=localEndDate,
-                summary=summary,
+                description=description,
                 # rrule={"FREQ": "YEARLY"},
                 )
