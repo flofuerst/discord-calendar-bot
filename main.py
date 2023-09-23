@@ -115,8 +115,8 @@ async def task_loop(writtenMessage):
     logging.info('Wait for 5 minutes')
     date_content = displayDates()
     em = discord.Embed(description=date_content)
-    await writtenMessage.edit(content="", embed=em if date_content != "" else "`In den nächsten 14 Tagen stehen keine wichtigen Termine an!🥳`")
 
+    await writtenMessage.edit(content="", embed=em if date_content != "" else "`In den nächsten 14 Tagen stehen keine wichtigen Termine an!🥳`", inline=True)
 
 createContext = None
 
@@ -146,6 +146,22 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
     endD = bool(re.search(dateRegex, endDate))
     startT = bool(re.search(timeRegex, startTime))
     endT = bool(re.search(timeRegex, endTime))
+
+    # check if start date is before end date
+    if (startD and endD):
+        startD = datetime.strptime(startDate, "%d.%m.%Y")
+        endD = datetime.strptime(endDate, "%d.%m.%Y")
+        if (startD > endD):
+            startD = False
+            endD = False
+
+    # check if start time is before end time
+    if (startT and endT):
+        startT = datetime.strptime(startTime, "%H:%M")
+        endT = datetime.strptime(endTime, "%H:%M")
+        if (startT >= endT):
+            startT = False
+            endT = False
 
     members = ctx.message.guild.members
 
@@ -185,8 +201,6 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
                     possibleParticipants[randomEmoji] = memberMentionId
                 participantsChoice += memberMentionId + "\n"
                 memberCounter += 1
-
-        # TODO Add reaction and keep track of participants which got selected --> show them in embed and save them in calendar; also ping them before event starts
 
         em = discord.Embed(title=f"Add Participants",
                            description=f"Please select the participants of this event.\nSelect ✅ if done.\n\n{participantsChoice}",
@@ -259,7 +273,7 @@ async def on_raw_reaction_add(payload):
                 # create event with specified title and datetimes
                 createEvent.create_event(
                     startDt, endDt, createTitle, "\n".join(addedParticipants))
-
+                
                 em = discord.Embed(title=f"Event created successfully!",
                                    description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}\n\n Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
                                    color=createContext.author.color)
