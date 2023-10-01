@@ -1,4 +1,4 @@
-def version = '0.1.0'
+koutdef version = '0.1.0'
 
 podTemplate(yaml:'''
               spec:
@@ -39,8 +39,7 @@ podTemplate(yaml:'''
 
     node(POD_LABEL) {
         stage('Pull Git Repo') {
-            git url: 'git@github.com:flofuerst/discord-calendar-bot.git',
-                credentialsId: 'github'
+            checkout scm
             container('docker') {
                 stage ('Build and push docker image') {
                     sh label: 'Build docker image',
