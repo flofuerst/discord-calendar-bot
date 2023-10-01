@@ -5,7 +5,7 @@ podTemplate(yaml:'''
                 serviceAccountName: jenkins
                 containers:
                 - name: jnlp
-                  image: repo.htl-md.schule:5003/jenkins/inbound-agent:4.7-1
+                  image: repo.htl-md.schule:5003/jenkins/inbound-agent
                   volumeMounts:
                   - name: home-volume
                     mountPath: /home/jenkins
