@@ -32,7 +32,7 @@ podTemplate(yaml:'''
             container('buildah') {
                 stage ('Build and push docker image') {
                     sh label: 'Build docker image',
-                       script: "buildah build . -t repo.htl-md.schule:5004/pydiscordbot:latest -t repo.htl-md.schule:5004/pydiscordbot:v$version -t htlmd/pydiscordbot:v$version"
+                       script: "buildah build -t repo.htl-md.schule:5004/pydiscordbot:latest -t repo.htl-md.schule:5004/pydiscordbot:v$version -t htlmd/pydiscordbot:v$version" .
                     withCredentials([usernamePassword(credentialsId: 'nexus-deploybot', passwordVariable: 'password', usernameVariable: 'user')]) {
                           sh label: 'Login to docker repo',
                              script: 'buildah login --username $user --password $password repo.htl-md.schule:5004'
