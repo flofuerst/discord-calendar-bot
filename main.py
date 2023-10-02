@@ -79,22 +79,25 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=em)
     # raise error
 
+
 def displayDates():
     entry = fetchDates.print_dates(daysToDisplay)
     output = ''
-    
+
     for content in entry:
         displayedParticipants = content[2]
         displayedParticipants = '-' if displayedParticipants == "" or displayedParticipants == "None" else displayedParticipants
-        
+
         text = '<t:'+str(content[0])+':F>' + '\n' + content[1] + \
-            ' ' + '<t:'+str(content[0])+':R>\nTeilnehmer:\n' + displayedParticipants + '\n\n'
+            ' ' + '<t:'+str(content[0])+':R>\nTeilnehmer:\n' + \
+            displayedParticipants + '\n\n'
         output += text+'\n' if content != entry[len(entry)-1] else text
     return output
 
 #   define init command: write dates one time and then call async task_loop with parameter writtenMassage
 #   last 10 messages are getting deleted before writing dates
 #   cancel async task_loop before new setup
+
 
 @bot.command()
 async def init(ctx):
@@ -103,7 +106,7 @@ async def init(ctx):
 
     task_loop.cancel()
     await createContext.channel.purge(limit=10)
-    
+
     writtenMessage = await createContext.send("Loading...")
     task_loop.start(writtenMessage)
 
@@ -119,6 +122,7 @@ async def task_loop(writtenMessage):
     await writtenMessage.edit(content="", embed=em if date_content != "" else "`In den nächsten 14 Tagen stehen keine wichtigen Termine an!🥳`", inline=True)
 
 createContext = None
+
 
 @bot.command()
 async def create(ctx, startDate, startTime, endDate, endTime, *title):
@@ -142,29 +146,16 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
     task_loop.cancel()
     dateRegex = "^(0[1-9]|[1-2][0-9]|3[0-1])\.(0[1-9]|1[0-2])\.\d{4}$"
     timeRegex = "^([0-1]\d|2[0-3])\:[0-5]\d$"
+    titleRegex = "^\[.+\].*$"
     startD = bool(re.search(dateRegex, startDate))
     endD = bool(re.search(dateRegex, endDate))
     startT = bool(re.search(timeRegex, startTime))
     endT = bool(re.search(timeRegex, endTime))
-
-    # check if start date is before end date
-    if (startD and endD):
-        startD = datetime.strptime(startDate, "%d.%m.%Y")
-        endD = datetime.strptime(endDate, "%d.%m.%Y")
-        if (startD > endD):
-            startD = False
-            endD = False
-
-    # check if start time is before end time
-    if (startT and endT):
-        startT = datetime.strptime(startTime, "%H:%M")
-        endT = datetime.strptime(endTime, "%H:%M")
-        if (startT >= endT):
-            startT = False
-            endT = False
+    correctTitleFormat = bool(re.search(titleRegex, createTitle))
 
     members = ctx.message.guild.members
 
+    # logging.info(startD, endD, startT, endT, createTitle)
     if (createContext.author.id in activeMessages):
         em = discord.Embed(
             title=f"Error!", description=f"Ongoing event creation not completed yet",
@@ -172,48 +163,67 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
         errMsg = await ctx.send(embed=em)
         logging.info('Failed event creation - ongoing creation not completed')
     # only create event if specified dates (and time) are correct
-    elif (startD and endD and startT and endT and createTitle != ""):
-        memberCounter = 0
-        participantsChoice = ""
-        emojiList = ['🙌', '💝', '😜', '🔥', '⬅️', '🏙', '👿', '🔙', '😿', '⏭',
-                     '🗝', '😭', '🏁', '🗒', '🔱', '✒️', '☎️', '⛄️', '🅿️', '💫',
-                     '💡', '📄', '💪', '🤑', '💠', '❣', '✍', '🐇', '⚱', '🗽',
-                     '🐷', '🌯', '🕊', '🚃', '‼️', '🍞', '⚒', '🗨', '🍡', '🔲',
-                     '🎹', '⚾️', '⚛', '🚁', '🚻', '😂', '🏩', '🚘', '🌕', '🛬',
-                     '🚍', '🏴', '🚠', '♎️', '🌝', '🎮', '🏹', '🛐', '🔃', '🍺',
-                     '🐄', '🎱', '👂', '🙅', '🏨', '😯', '🌞', '🎾', '👸', '🏵',
-                     '🛣', '🍁', '🚢', '🔆', '👤', '👊', '🙎', '🌫', '🍴', '⚪️',
-                     '🔉', '🚧', '❓', '📞', '👽', '❗️', '🏉', '🍵', '🚈', '🔺',
-                     '📊', '💿', '⛲️', '🌬', '💽', '🔒', '🎩', '🌳', '👯', '👚']
+    elif (startD and endD and startT and endT and createTitle != "" and correctTitleFormat):
+        sd = datetime.strptime(startDate, "%d.%m.%Y")
+        ed = datetime.strptime(endDate, "%d.%m.%Y")
+        st = datetime.strptime(startTime, "%H:%M")
+        et = datetime.strptime(endTime, "%H:%M")
+        if (sd == ed and st >= et):
+            em = discord.Embed(
+                title=f"Error!", description=f"StartTime has to be before EndTime if startDate and endDate are equal",
+                color=ctx.author.color)
+            errMsg = await ctx.send(embed=em)
+            logging.info(
+                'Failed event creation - startTime is equal or after endTime')
+        elif (sd > ed):
+            em = discord.Embed(
+                title=f"Error!", description=f"StartDate has to be before or equal EndDate",
+                color=ctx.author.color)
+            errMsg = await ctx.send(embed=em)
+            logging.info('Failed event creation - startDate is after endDate')
+        else:
+            memberCounter = 0
+            participantsChoice = ""
+            emojiList = ['🙌', '💝', '😜', '🔥', '⬅️', '🏙', '👿', '🔙', '😿', '⏭',
+                         '🗝', '😭', '🏁', '🗒', '🔱', '✒️', '☎️', '⛄️', '🅿️', '💫',
+                         '💡', '📄', '💪', '🤑', '💠', '❣', '✍', '🐇', '⚱', '🗽',
+                         '🐷', '🌯', '🕊', '🚃', '‼️', '🍞', '⚒', '🗨', '🍡', '🔲',
+                         '🎹', '⚾️', '⚛', '🚁', '🚻', '😂', '🏩', '🚘', '🌕', '🛬',
+                         '🚍', '🏴', '🚠', '♎️', '🌝', '🎮', '🏹', '🛐', '🔃', '🍺',
+                         '🐄', '🎱', '👂', '🙅', '🏨', '😯', '🌞', '🎾', '👸', '🏵',
+                         '🛣', '🍁', '🚢', '🔆', '👤', '👊', '🙎', '🌫', '🍴', '⚪️',
+                         '🔉', '🚧', '❓', '📞', '👽', '❗️', '🏉', '🍵', '🚈', '🔺',
+                         '📊', '💿', '⛲️', '🌬', '💽', '🔒', '🎩', '🌳', '👯', '👚']
 
-        possibleParticipants = {}
+            possibleParticipants = {}
 
-        for member in members:
-            if (not member.bot):
-                digitEmoji = chr(ord("\U00000030") + memberCounter) + "\U000020E3"
-                memberMentionId = f"<@{member.id}>"
-                if (memberCounter < 10):
-                    participantsChoice += digitEmoji
-                    possibleParticipants[digitEmoji] = memberMentionId
-                else:
-                    randomEmoji = random.sample(emojiList, 1)[0]
-                    participantsChoice += randomEmoji
-                    possibleParticipants[randomEmoji] = memberMentionId
-                participantsChoice += memberMentionId + "\n"
-                memberCounter += 1
+            for member in members:
+                if (not member.bot):
+                    digitEmoji = chr(ord("\U00000030") +
+                                     memberCounter) + "\U000020E3"
+                    memberMentionId = f"<@{member.id}>"
+                    if (memberCounter < 10):
+                        participantsChoice += digitEmoji
+                        possibleParticipants[digitEmoji] = memberMentionId
+                    else:
+                        randomEmoji = random.sample(emojiList, 1)[0]
+                        participantsChoice += randomEmoji
+                        possibleParticipants[randomEmoji] = memberMentionId
+                    participantsChoice += memberMentionId + "\n"
+                    memberCounter += 1
 
-        em = discord.Embed(title=f"Add Participants",
-                           description=f"Please select the participants of this event.\nSelect ✅ if done.\n\n{participantsChoice}",
-                           color=ctx.author.color)
-        message = await ctx.send(embed=em)
+            em = discord.Embed(title=f"Add Participants",
+                               description=f"Please select the participants of this event.\nSelect ✅ if done.\n\n{participantsChoice}",
+                               color=ctx.author.color)
+            message = await ctx.send(embed=em)
 
-        global eventParticipants
-        eventParticipants = message
-        activeMessages.add(createContext.author.id)
+            global eventParticipants
+            eventParticipants = message
+            activeMessages.add(createContext.author.id)
 
-        for emoji in possibleParticipants.keys():
-            await message.add_reaction("✅")
-            await message.add_reaction(emoji)
+            for emoji in possibleParticipants.keys():
+                await message.add_reaction("✅")
+                await message.add_reaction(emoji)
 
     # error if not correct date(s) specified
     else:
@@ -230,12 +240,13 @@ eventConfirm = None
 eventParticipants = None
 participants = ""
 
+
 @bot.event
 async def on_raw_reaction_add(payload):
     global eventConfirm, participants
 
     if (payload.user_id == createContext.author.id):
-        if (eventParticipants is not None and  payload.message_id == eventParticipants.id):
+        if (eventParticipants is not None and payload.message_id == eventParticipants.id):
             if (payload.emoji.name == "✅"):
                 participants = ", ".join(addedParticipants)
                 if (participants == ""):
@@ -273,7 +284,7 @@ async def on_raw_reaction_add(payload):
                 # create event with specified title and datetimes
                 createEvent.create_event(
                     startDt, endDt, createTitle, "\n".join(addedParticipants))
-                
+
                 em = discord.Embed(title=f"Event created successfully!",
                                    description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}\n\n Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
                                    color=createContext.author.color)
