@@ -153,7 +153,8 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
     endT = bool(re.search(timeRegex, endTime))
     correctTitleFormat = bool(re.search(titleRegex, createTitle))
 
-    members = ctx.message.guild.members
+    # get all members of "Pfuscher" role
+    members = ctx.message.guild.get_role(893786618446643200).members
 
     # logging.info(startD, endD, startT, endT, createTitle)
     if (createContext.author.id in activeMessages):
