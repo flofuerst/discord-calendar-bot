@@ -270,6 +270,7 @@ async def on_raw_reaction_add(payload):
             if (payload.emoji.name == "✅"):
                 # delete confirm message
                 await eventConfirm.delete()
+                await eventParticipants.delete()
 
                 # build up correct datetime
                 startDate = createStartDate.split('.')
@@ -297,6 +298,7 @@ async def on_raw_reaction_add(payload):
             elif (payload.emoji.name == "❌"):
                 # delete confirm message
                 await eventConfirm.delete()
+                await eventParticipants.delete()
 
                 em = discord.Embed(title=f"Event not created!",
                                    description=f"Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
