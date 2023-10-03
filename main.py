@@ -74,10 +74,7 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        em = discord.Embed(
-            title=f"Error!", description=f"Command not found.", color=ctx.author.color)
-        await ctx.send(embed=em)
-    # raise error
+        await createEmbed(ctx, "Error!", "Command not found.", "Command not found")
 
 
 def displayDates():
@@ -97,8 +94,6 @@ def displayDates():
 #   define init command: write dates one time and then call async task_loop with parameter writtenMassage
 #   last 10 messages are getting deleted before writing dates
 #   cancel async task_loop before new setup
-
-
 @bot.command()
 async def init(ctx):
     # global var for ctx
@@ -110,6 +105,14 @@ async def init(ctx):
     writtenMessage = await createContext.send("Loading...")
     task_loop.start(writtenMessage)
 
+async def createEmbed(context, titleText, descriptionText, logMessageText):
+    em = discord.Embed(
+                title=titleText, description=descriptionText,
+                color=context.author.color)
+    errMsg = await context.send(embed=em)
+    logging.info(logMessageText)
+    
+    return errMsg
 
 #   define async loop to edit message which was written in setup function
 @tasks.loop(minutes=5)
@@ -158,11 +161,7 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
 
     # logging.info(startD, endD, startT, endT, createTitle)
     if (createContext.author.id in activeMessages):
-        em = discord.Embed(
-            title=f"Error!", description=f"Ongoing event creation not completed yet",
-            color=ctx.author.color)
-        errMsg = await ctx.send(embed=em)
-        logging.info('Failed event creation - ongoing creation not completed')
+        errMsg = await createEmbed(createContext, "Error!", "Ongoing event creation not completed yet", "Failed event creation - ongoing creation not completed")
     # only create event if specified dates (and time) are correct
     elif (startD and endD and startT and endT and createTitle != "" and correctTitleFormat):
         sd = datetime.strptime(startDate, "%d.%m.%Y")
@@ -170,18 +169,9 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
         st = datetime.strptime(startTime, "%H:%M")
         et = datetime.strptime(endTime, "%H:%M")
         if (sd == ed and st >= et):
-            em = discord.Embed(
-                title=f"Error!", description=f"StartTime has to be before EndTime if startDate and endDate are equal",
-                color=ctx.author.color)
-            errMsg = await ctx.send(embed=em)
-            logging.info(
-                'Failed event creation - startTime is equal or after endTime')
+            errMsg = await createEmbed(createContext, "Error!", "StartTime has to be before EndTime if startDate and endDate are equal", "Failed event creation - startTime is equal or after endTime")
         elif (sd > ed):
-            em = discord.Embed(
-                title=f"Error!", description=f"StartDate has to be before or equal EndDate",
-                color=ctx.author.color)
-            errMsg = await ctx.send(embed=em)
-            logging.info('Failed event creation - startDate is after endDate')
+            errMsg = await createEmbed(createContext, "Error!", "StartDate has to be before or equal EndDate", "Failed event creation - startDate is after endDate")
         else:
             memberCounter = 0
             participantsChoice = ""
@@ -213,10 +203,7 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
                     participantsChoice += memberMentionId + "\n"
                     memberCounter += 1
 
-            em = discord.Embed(title=f"Add Participants",
-                               description=f"Please select the participants of this event.\nSelect ✅ if done.\n\n{participantsChoice}",
-                               color=ctx.author.color)
-            message = await ctx.send(embed=em)
+            message = await createEmbed(createContext, "Add Participants", f"Please select the participants of this event.\nSelect ✅ if done.\n\n{participantsChoice}", "Participant selection started")
 
             global eventParticipants
             eventParticipants = message
@@ -228,12 +215,7 @@ async def create(ctx, startDate, startTime, endDate, endTime, *title):
 
     # error if not correct date(s) specified
     else:
-        em = discord.Embed(
-            title=f"Error!", description=f"Incorrect input\nSYNOPSIS:\n,cal create DD.MM.YYYY HH:MM DD.MM.YYYY HH:MM TITLE...",
-            color=ctx.author.color)
-        errMsg = await ctx.send(embed=em)
-        logging.info('Failed event creation - incorrect input')
-
+        errMsg = await createEmbed(createContext, "Error!", "Incorrect input\nSYNOPSIS:\n,cal create DD.MM.YYYY HH:MM DD.MM.YYYY HH:MM TITLE...", "Failed event creation - incorrect input")
     task_loop.start(writtenMessage)
 
 
@@ -253,11 +235,7 @@ async def on_raw_reaction_add(payload):
                 if (participants == ""):
                     participants = "-"
 
-                em = discord.Embed(title=f"Do you really want to create this event?",
-                                   description=f"Title: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}",
-                                   color=createContext.author.color)
-                message = await createContext.send(embed=em)
-
+                message = await createEmbed(createContext, "Do you really want to create this event?", f"Title: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}", "Event creation confirmation started")
                 eventConfirm = message
 
                 await message.add_reaction("✅")
@@ -287,13 +265,10 @@ async def on_raw_reaction_add(payload):
                 createEvent.create_event(
                     startDt, endDt, createTitle, "\n".join(addedParticipants))
 
-                em = discord.Embed(title=f"Event created successfully!",
-                                   description=f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}\n\n Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
-                                   color=createContext.author.color)
-                infoMsg = await createContext.send(embed=em)
+                infoMsg = await createEmbed(createContext, "Event created successfully!", f"Following event was created:\n\nTitle: {createTitle}\nStart date: {createStartDate} at {createStartTime}\nEnd date: {createEndDate} at {createEndTime}\nParticipants: {participants}\n\n Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}", "Successful event creation")
+                
+                # remove author from active messages set
                 activeMessages.remove(createContext.author.id)
-
-                logging.info('Successful event creation')
 
             # check if same user, correct message id and correct emoji
             elif (payload.emoji.name == "❌"):
@@ -301,12 +276,7 @@ async def on_raw_reaction_add(payload):
                 await eventConfirm.delete()
                 await eventParticipants.delete()
 
-                em = discord.Embed(title=f"Event not created!",
-                                   description=f"Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}",
-                                   color=createContext.author.color)
-                infoMsg = await createContext.send(embed=em)
-                activeMessages.remove(createContext.author.id)
-                logging.info('Aborted event creation')
+                infoMsg = await createEmbed(createContext, "Event not created!", f"Following command was used:\n,cal create {createStartDate} {createStartTime} {createEndDate} {createEndTime} {createTitle}", "Aborted event creation")
 
             # clear participants
             addedParticipants.clear()
